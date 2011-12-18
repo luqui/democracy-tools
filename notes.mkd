@@ -43,4 +43,34 @@ solutions, etc.
 We see that the system has two interacting parts, alternating with each nesting:
 *problem*, *proposal*.
 
+There are two related decisions to make about problems and proposals.  They are:
+
+1. How does a community *select* a proposal to use out of the proposed?
+2. How does a community *resolve* an objection?
+
+These are in fact the same problem: to resolve an objection is to select a
+solution for it.  The selected solution may sometimes be "this is a
+proposal-killer", so we have to allow an objection to ripple its way up to the
+main line of discussion.
+
+Actually, maybe "this is a proposal-killer" is not a resolution.  In those
+cases, we leave the objection unresolved, signaling that this is an open problem
+and that a solution has yet to be found (but not closing off the imagination as
+"there is no solution").
+
+A proposal can only be accepted when there are no remaining objections.
+
+But suppose there were three proposals, all of which have no objections. We need
+further criteria for selecting a proposal.
+
+Reddit-style voting perhaps. People upvote proposals that they like, or raise
+objections to proposals that they don't (thus requiring expression of why they
+don't like it). When the highest-voted proposal (beyond a threshold) has no
+objections, it is accepted.  This is subtly different from selecting the
+highest-voted *with* no objections, which would mean that if you raised an
+objection to a popular proposal, it may automatically select a less popular one
+rather than giving the community a chance to resolve the objection. So a winning
+proposal must not only be objection-free, but gain the majority support of the
+participants.
+
 
