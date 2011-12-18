@@ -73,5 +73,15 @@ rather than giving the community a chance to resolve the objection. So a winning
 proposal must not only be objection-free, but gain the majority support of the
 participants.
 
+Implementation
+==============
+
+I haven't even started coding and I'm already sick of django. This will be a
+UI-heavy application with a simple data model, I'd like to do as much as I can
+from Javascript.  How?
+
+I suppose I am talking about a layer that abstracts over the server/client
+model. 
+
 <!-- vim: tw=80 : 
 -->
