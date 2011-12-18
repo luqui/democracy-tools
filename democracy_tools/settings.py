@@ -84,6 +84,7 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
+    'democracy_tools.debate',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',

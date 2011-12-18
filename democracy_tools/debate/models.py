@@ -2,19 +2,22 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Post(models.Model):
-    poster = models.User()
+    poster = models.ForeignKey(User)
     text = models.TextField()
+    votes = models.IntegerField()
 
 class Problem(models.Model):
-    post = models.OneToOneField(Post, primary_key=True)
-    proposal = models.ForeignKey('democracy_tools.debate.Proposal')
+    id = models.OneToOneField(Post, primary_key=True, related_name='problem_downcast')
+    responds = models.ForeignKey('Proposal')
 
 class Proposal(models.Model):
-    post = models.OneToOneField(Post, primary_key=True)
-    problem = models.ForeignKey(Problem)
+    id = models.OneToOneField(Post, primary_key=True, related_name='proposal_downcast')
+    responds = models.ForeignKey(Problem)
 
 class Comment(models.Model):
-    post = models.OneToOneField(Post, primary_key=True)
-    subject = models.Post(Post)
-
+    id = models.OneToOneField(Post, primary_key=True, related_name='comment_downcast')
+    subject = models.ForeignKey(Post)
     
+class Vote(models.Model):
+    user = models.ForeignKey(User)
+    subject = models.ForeignKey(Post)
