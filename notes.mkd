@@ -1,0 +1,46 @@
+This is democracy-tools, a website for assisting democratic decisions.  The
+mission statement is:
+
+To develop tools that facilitate and encourage democratic, informed, rational
+discussion of policy.
+
+So, I want to start with the _debate_ app. It's like a forum, but it is set up
+specifically for a rational policy debate and exploration.  We take from
+Sociocracy the idea of _paramount objection_. That is, on a Proposal, a user can
+enter a paramount objection: an aspect of the policy that is unacceptable
+(perhaps defined in the more precise sociocratic terms for some situations).
+These objections then form sub-discussions which move toward _resolution_.
+Thus the site guides the dicussion so that objections are not forgotten and so
+that the conversation stays focused.
+
+It seems that it should almost be wiki-style, where anybody can edit, because
+much of discussion will probably not happen at the appropriate place in the
+forum: people will raise objections that are addressed elsewhere, etc. So we
+would like users to be able to reorganize the debate.  However, as policy
+debates can get pretty intense, we don't want to allow censorship (or
+semi-censorship, in which reasonable objections are buried underneath piles of
+garbage).  This will be a tension to resolve later.  **UNRESOLVED**
+
+Let's think about the organization of a policy debate.  There are two
+situations:
+
+1. There is a problem that the community seeks a solution to.
+2. There is a proposal for a change that the community wants to evaluate.
+
+In (1), the problem workflow, a user poses the the problem in a post and
+describes it in as much detail as he can.  There may be discussion about what
+exactly the problem is, which may result in a modification of the description of
+the original problem statement. 
+
+Then users propose a solution, which, nested inside the original problem, use
+the proposal workflow.
+
+In (2), the proposal workflow, there may be some clarifying discussion as
+before.  Users then post objections to the proposal, which can be discussed and
+addressed.  The objections use the problem workflow, in which people propose
+solutions, etc.
+
+We see that the system has two interacting parts, alternating with each nesting:
+*problem*, *proposal*.
+
+
