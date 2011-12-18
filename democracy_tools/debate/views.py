@@ -1,1 +1,2 @@
-# Create your views here.
+from democracy_tools.debate.models import *
+

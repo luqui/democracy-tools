@@ -4,6 +4,15 @@ from django.conf.urls.defaults import *
 # from django.contrib import admin
 # admin.autodiscover()
 
+def jsonwrap(f):
+    from django.http import HttpResponse
+    import json
+    
+    def cb(*args, **kwargs):
+        datastructure = f(*args, **kwargs)
+        return HttpResponse(content=json.dumps(datastructure), mimetype='application/json')
+    return cb
+
 urlpatterns = patterns('',
     # Example:
     # (r'^democracy_tools/', include('democracy_tools.foo.urls')),

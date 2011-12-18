@@ -3,16 +3,17 @@ from django.contrib.auth.models import User
 
 class Post(models.Model):
     poster = models.ForeignKey(User)
+    title = models.TextField()
     text = models.TextField()
     votes = models.IntegerField()
 
 class Problem(models.Model):
     id = models.OneToOneField(Post, primary_key=True, related_name='problem_downcast')
-    responds = models.ForeignKey('Proposal')
+    responds = models.ForeignKey('Proposal', null=True)
 
 class Proposal(models.Model):
     id = models.OneToOneField(Post, primary_key=True, related_name='proposal_downcast')
-    responds = models.ForeignKey(Problem)
+    responds = models.ForeignKey(Problem, null=True)
 
 class Comment(models.Model):
     id = models.OneToOneField(Post, primary_key=True, related_name='comment_downcast')
