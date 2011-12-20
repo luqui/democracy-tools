@@ -1,5 +1,5 @@
 function(doc) {
-    if (doc.type == 'issue') {
+    if (doc.type == 'proposal') {
         emit([doc.parent, doc.created_on], doc);
     }
 };

@@ -77,11 +77,15 @@ $(function() {
 
     var itemList = function(view, parent, template) {
         var ret = $('<div></div>');
+        var startkey = parent ? [parent] : [];
+        var endkey = parent ? [parent + '\377'] : ['\377'];
+        console.log("Viewing ", startkey, "...", endkey);
         db.view(view, {
-            descending: "true",
-            startkey: [parent + '\0'],
-            endkey: [parent],
+            //descending: "true",
+            startkey: startkey,
+            endkey: endkey,
             success: function(data) {
+                console.log(data);
                 var rendered = template(data.rows.map(function(r) { return r.value }));
                 ret.replaceWith(rendered);
             }
@@ -96,14 +100,12 @@ $(function() {
         var showIssue = function(issue) {
             var div = 
                 JT.elt('div', {}, 
-                    JT.text(issue['content']),
+                    JT.text(issue.content),
                     JT.elt('br'),
-                    JT.elt('b', {}, JT.text(issue['summary'])));
+                    JT.elt('b', {}, JT.text(issue.summary)));
             return div.add(addFooter([
-                [ 'Comments', function() {
-                        return commentList();
-                    }
-                ]
+                [ 'Comments', function() { return commentList(issue._id); } ],
+                [ 'Proposals', function() { return proposalList(issue._id); } ]
             ]));
         };
 
@@ -120,22 +122,47 @@ $(function() {
     //////////////
     // Comments //
     //////////////
-    
     var commentList = function(parent) {
         var showComment = function(comment) {
             var div =
                 JT.elt('div', {},
-                    JT.text(comment['content']));
+                    JT.text(comment.content));
             return div;
         };
 
-        var commentFooter = addFooter([
+        var commentsFooter = addFooter([
             [ 'Add Comment', function() {
                     return newItem(mustache_template($('#new-comment-template').html()), parent);
                 }
             ]
         ]);
-        var list = itemList(design + '/comments', parent, showList(showComment, commentFooter));
+        var list = itemList(design + '/comments', parent, showList(showComment, commentsFooter));
+        return list;
+    };
+
+    ///////////////
+    // Proposals //
+    ///////////////
+    var proposalList = function(parent) {
+        var showProposal = function(proposal) {
+            var div = 
+                JT.elt('div', {},
+                    JT.elt('b', {}, JT.text(proposal.title)),
+                    JT.elt('br'),
+                    JT.text(proposal.content));
+            return div.add(addFooter([
+                [ 'Comments', function() { return commentList(proposal._id) } ],
+                [ 'Issues', function() { return issueList(proposal._id) } ]
+            ]));
+        };
+        
+        var proposalsFooter = addFooter([
+            [ 'Add Proposal', function() { 
+                    return newItem(mustache_template($('#new-proposal-template').html()), parent);
+                }
+            ]
+        ]);
+        var list = itemList(design + '/proposals', parent, showList(showProposal, proposalsFooter));
         return list;
     };
     
