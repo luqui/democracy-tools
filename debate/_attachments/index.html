@@ -9,7 +9,7 @@
 
     <h1>Debate</h1>
 
-    <div id="profile">
+    <div id="root-issue-list">
     </div>
     <div id="new-issue">
       <h2>New Issue</h2>
@@ -36,6 +36,14 @@
   <script src="vendor/couchapp/jquery.couchProfile.js"></script>
   <script src="vendor/couchapp/md5.js"></script>
   <script src="vendor/couchapp/jquery.mustache.js"></script>
+
+  <script id="issue-list-template" type="text/x-mustache">
+   <table>
+    {{#issues}}
+    <tr><td>{{content}}<br/><b>{{summary}}</b></tr>
+    {{/issues}}
+   </table>
+  </script>
   
   <script src="script/app.js"></script>
 

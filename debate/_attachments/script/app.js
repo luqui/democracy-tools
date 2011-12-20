@@ -25,8 +25,23 @@ $(function() {
         var form = this;
         var doc = $(form).serializeObject();
         doc.created_on = new Date();
-        db.saveDoc(doc, {success: function(x){ form.reset(); alert("Posted " + x) }});
+        doc.type = 'issue';
+        db.saveDoc(doc, {success: function(x){ form.reset(); console.log("Posted ", x) }});
         return false;
+    });
+
+    console.log("Viewing (", design, ")");
+    db.view(design + "/root-issues", {
+        descending: "true",
+        success: function(data) {
+            $('#root-issue-list').html(
+                $.mustache($('#issue-list-template').html(), {
+                    issues: data.rows.map(function(r) { return r.value })
+                }));
+        },
+        error: function(status) {
+            console.log("Error:", status);
+        }
     });
 
     /*
