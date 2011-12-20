@@ -2,9 +2,38 @@
 
 .issue {
     border: 1px solid black;
-    padding: 5px;
+    padding: 1ex 0.5em 1ex 1em;
     border-radius: 20px;
     background: #ffc;
+}
+
+span.voted, span.unvoted {
+    font-size: 18pt;
+    margin-right: 0.5em;
+    margin-left: 0.5em;
+    float: left;
+    padding: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+span.unvoted {
+    background: #aaa;
+}
+
+.issue span.voted {
+    background: #f88;
+}
+
+.proposal {
+    border: 1px solid black;
+    padding: 5px 10px 5px 10px;
+    border-radius: 20px;
+    background: #cfc;
+}
+
+.proposal span.voted {
+    background: #88f;
 }
 
 .comment {
@@ -15,15 +44,10 @@
     color: #444;
 }
 
-.proposal {
-    border: 1px solid black;
-    padding: 5px;
-    border-radius: 20px;
-    background: #cfc;
-}
-
 .indent {
-    margin-left: 1in;
+    margin-left: 0.5in;
+    padding-left: 0.5in;
+    border-left: 1px dashed black;
 }
 
 .hidden {
@@ -40,4 +64,3 @@ a.expanded {
     font-weight: bold;
     text-decoration: none;
 }
-

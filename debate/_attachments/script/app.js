@@ -128,6 +128,60 @@ $(function() {
         }
     }
 
+    var voter = function(docid) {
+        var box = JT.elt('span', { class: 'unvoted' });
+        var votedoc = null;
+        var voteid = 'vote_' + docid + '_' + username;    
+
+        var clickHandler = function() {
+            if (box.hasClass('unvoted')) {
+                box.removeClass('unvoted');
+                box.addClass('voted');
+                votedoc = { type: 'vote', parent: docid, user: username, _id: voteid };
+                db.saveDoc(votedoc, {
+                    success: function(obj) {
+                        votedoc._id = obj.id;
+                        votedoc._rev = obj.rev;
+                        box.text(1+1*box.text());
+                    },
+                    error: function(status, msg) { alert(status + ": " + msg) }
+                });
+            }
+            else {
+                box.removeClass('voted');
+                box.addClass('unvoted');
+                
+                db.removeDoc(votedoc, {
+                    success: function() {
+                        votedoc = null;
+                        box.text(-1+1*box.text());
+                    },
+                    error: function(status, msg) { alert(status + ": " + msg) }
+                });
+            }
+            return false;
+        };    
+    
+        db.view(design + '/votes', {
+            key: docid,
+            success: function(data) {
+                box.text(data.rows.length);
+                for (var i in data.rows) {
+                    console.log(data.rows[i].user, 'vs', username);
+                    if (data.rows[i].value.user == username) {
+                        box.removeClass('unvoted');
+                        box.addClass('voted');
+                        votedoc = data.rows[i].value;
+                    }
+                }
+                console.log("---");
+                box.click(clickHandler);
+            },
+            error: function(status, msg) { alert(status + ": " + msg) }
+        });
+        return box;
+    };
+
     
     ////////////
     // Issues //
@@ -135,6 +189,7 @@ $(function() {
     var issueList = function(parent) {
         var showIssue = function(issue) {
             var div = mustache_template($('#show-issue-template').html())(issue);
+            div.prepend(voter(issue._id));
             return div.add(JT.elt('div', {class: 'indent'}, addFooter([
                 commentFooterLink(issue._id), 
                 proposalFooterLink(issue._id)
@@ -180,6 +235,7 @@ $(function() {
     var proposalList = function(parent) {
         var showProposal = function(proposal) {
             var div = mustache_template($('#show-proposal-template').html())(proposal);
+            div.prepend(voter(proposal._id));
             return div.add(JT.elt('div', {class:'indent'}, addFooter([
                 commentFooterLink(proposal._id),
                 issueFooterLink(proposal._id)
@@ -197,29 +253,13 @@ $(function() {
     };
     
     var proposalFooterLink = footerLink('Proposals', 'proposal', proposalList);
-    
-    $('#root-issue-list').append(issueList(null));
 
-    /*
-    $.couchProfile.templates.profileReady = $("#new-issue").html();
+    var username = null;
     $("#account").couchLogin({
-        loggedIn : function(r) {
-            $("#profile").couchProfile(r, {
-                profileReady : function(profile) {
-                    $("#new-issue-form").submit(function(e){
-                        e.preventDefault();
-                        var form = this, doc = $(form).serializeObject();
-                        doc.created_at = new Date();
-                        doc.profile = profile;
-                        db.saveDoc(doc, {success : function() {form.reset();}});
-                        return false;
-                    }).find("input").focus();
-                }
-            });
+        loggedIn: function(session) { 
+            username = session.userCtx.name; 
+            $('#root-issue-list').append(issueList(null));
         },
-        loggedOut : function() {
-            $("#profile").html('<p>Please log in.</p>');
-        }
+        loggedOut: function(session) { if (username) document.location.reload(); }
     });
-    */
  });
