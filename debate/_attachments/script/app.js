@@ -21,9 +21,15 @@ $(function() {
         design = path[3],
         db = $.couch.db(path[1]);
 
+    var mustache_template = function(template) {
+        return function(opts) { 
+            return $($.mustache(template, opts));
+        };
+    };
+
     var newItem = function(template) {
         return function(parent) {
-            var ret = $($.mustache(template, {}));
+            var ret = template({});
             var form = ret.find('form');
             form.submit(function(e) {
                 var doc = form.serializeObject();
@@ -48,7 +54,7 @@ $(function() {
                 startkey: [parent + '\0'],
                 endkey: [parent],
                 success: function(data) {
-                    var rendered = $.mustache(template, {
+                    var rendered = template({
                         items: data.rows.map(function(r) { return r.value })
                     });
                     ret.html(rendered);
@@ -63,8 +69,8 @@ $(function() {
         };
     };
 
-    var newIssue = newItem($('#new-issue-template').html());
-    var issueList = itemList(design + '/issues', $('#issue-list-template').html(), newIssue);
+    var newIssue = newItem(mustache_template($('#new-issue-template').html()));
+    var issueList = itemList(design + '/issues', mustache_template($('#issue-list-template').html()), newIssue);
 
     $('#root-issue-list').append(issueList(null));
 
