@@ -30,13 +30,35 @@ $(function() {
         return false;
     });
 
-    console.log("Viewing (", design, ")");
+    var newIssue = function() {
+        var ret = $($.mustache($('#new-issue-template').html(), {}));
+        var form = ret.find('form');
+        form.submit(function(e) {
+            var doc = form.serializeObject();
+            doc.created_on = new Date();
+            doc.type = "issue";
+            db.saveDoc(doc, {
+                success: function() {
+                    ret.remove();
+                },
+                error: function(status) { alert("Error: " + status) }
+            });
+        });
+        return ret;
+    };
+
     db.view(design + "/root-issues", {
         descending: "true",
         success: function(data) {
             $('#root-issue-list').html(
                 $.mustache($('#issue-list-template').html(), {
                     issues: data.rows.map(function(r) { return r.value })
+                }));
+            $("#root-issue-list").append(
+                $('<a href="#">Add Issue</a>').click(function() { 
+                    var a = $(this);
+                    a.before(newIssue());
+                    return false;
                 }));
         },
         error: function(status) {
