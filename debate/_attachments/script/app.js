@@ -90,22 +90,28 @@ $(function() {
         return ret;
     };
 
-    var counterLink = function(prefix, view, parent) {
-        var startkey = parent ? [parent] : [];
-        var endkey = parent ? [parent + '\377'] : ['\377'];
+    var counterLink = function(prefix, type, parent) {
+        var startkey = parent ? [type, parent] : [type];
+        var endkey = parent ? [type, parent + '\377'] : [type, '\377'];
         var node = JT.elt('span', {}, JT.text(prefix));
-        db.view(view, {
+        db.view(design + '/count', {
             startkey: startkey,
             endkey: endkey,
             reduce: true,
             success: function(data) {
                 var val = data.rows.length > 0 ? data.rows[0][null] : 0;
-                console.log(data, '(', val, ')');
                 node.text(prefix + ' (' + (data.rows.length > 0 ? data.rows[0].value : 0) + ')');
             }
         });
         return node;
     };
+    
+    var footerLink = function(prefix, type, list) {
+        return function(parent) { 
+            return [ counterLink(prefix, type, parent), function() { return list(parent) } ];
+        }
+    }
+
     
     ////////////
     // Issues //
@@ -119,7 +125,7 @@ $(function() {
                     JT.elt('b', {}, JT.text(issue.summary)));
             return div.add(addFooter([
                 commentFooterLink(issue._id), 
-                [ 'Proposals', function() { return proposalList(issue._id); } ]
+                proposalFooterLink(issue._id)
             ]));
         };
 
@@ -132,6 +138,8 @@ $(function() {
         var list = itemList(design + '/issues', parent, showList(showIssue, issuesFooter));
         return list;
     };
+
+    var issueFooterLink = footerLink('Issues', 'issue', issueList);
 
     //////////////
     // Comments //
@@ -154,12 +162,7 @@ $(function() {
         return list;
     };
 
-    var commentFooterLink = function(parent) {
-        return [
-            counterLink('Comments', design + '/count-comments', parent), 
-            function() { return commentList(parent) }
-        ]
-    };
+    var commentFooterLink = footerLink('Comments', 'comment', commentList);
 
     ///////////////
     // Proposals //
@@ -172,8 +175,8 @@ $(function() {
                     JT.elt('br'),
                     JT.text(proposal.content));
             return div.add(addFooter([
-                [ 'Comments', function() { return commentList(proposal._id) } ],
-                [ 'Issues', function() { return issueList(proposal._id) } ]
+                commentFooterLink(proposal._id),
+                issueFooterLink(proposal._id)
             ]));
         };
         
@@ -186,6 +189,8 @@ $(function() {
         var list = itemList(design + '/proposals', parent, showList(showProposal, proposalsFooter));
         return list;
     };
+    
+    var proposalFooterLink = footerLink('Proposals', 'proposal', proposalList);
     
     $('#root-issue-list').append(issueList(null));
 
