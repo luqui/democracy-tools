@@ -77,8 +77,8 @@ $(function() {
 
     var itemList = function(view, parent, template) {
         var ret = $('<div></div>');
-        var startkey = parent ? [parent] : [];
-        var endkey = parent ? [parent + '\377'] : ['\377'];
+        var startkey = parent ? [parent] : [null];
+        var endkey = parent ? [parent + '\377'] : ['\0'];
         db.view(view, {
             startkey: startkey,
             endkey: endkey,
