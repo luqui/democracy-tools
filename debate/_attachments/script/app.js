@@ -32,11 +32,11 @@ $(function() {
 
     var showList = function(itemRenderer, footer) { 
         return function(list) {
-            var t = JT.elt('table');
+            var t = JT.elt('div');
             for (var i = 0; i < list.length; i++) {
-                t.append(JT.elt('tr', {}, JT.elt('td', {}, itemRenderer(list[i]))));
+                t.append(JT.elt('div', {}, itemRenderer(list[i])));
             }
-            return t.add(footer);
+            return t.append(footer);
         };
     };
 
@@ -46,13 +46,29 @@ $(function() {
             (function() {
                 var text = buttons[i][0];
                 var action = buttons[i][1];
-                
-                var link = JT.elt('a', { href: '#' }, text);
+
+                var elem = null;
+                var link = JT.elt('a', { href: '#', class: 'contracted' }, text);
                 link.click(function() {
-                    div.before(action());
+                    if (link.hasClass('contracted')) {
+                        if (elem == null) {
+                            elem = action();
+                            link.after(elem);
+                        }
+                        else {  
+                            elem.show();
+                        }
+                        link.removeClass('contracted');
+                        link.addClass('expanded');
+                    }
+                    else {
+                        elem.hide();
+                        link.removeClass('expanded');
+                        link.addClass('contracted');
+                    }
                     return false;
                 });
-                div.append(link);
+                div.append(link, JT.elt('br'));
             })();
         }
         return div;
@@ -84,7 +100,7 @@ $(function() {
             endkey: endkey,
             success: function(data) {
                 var rendered = template(data.rows.map(function(r) { return r.value }));
-                ret.replaceWith(rendered);
+                ret.append(rendered);
             }
         });
         return ret;

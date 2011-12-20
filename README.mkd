@@ -82,5 +82,9 @@ proposal and on one of its objections at the same time.  The number of people
 with tokens on a proposal or objection determines its score, thus its sort
 order.
 
+Proposals and objections are editable (history viewable), comments are not.  The
+comments record the discussion, whereas the proposals / objections represent the
+latest state of knowledge.
+
 <!-- vim: tw=80 : 
 -->
