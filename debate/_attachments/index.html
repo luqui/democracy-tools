@@ -31,8 +31,8 @@
   </script>
   
   <script id="new-issue-template" type="text/x-mustache">
-    <div id="new-issue">
-      <form id="new-issue-form">
+    <div>
+      <form>
         <input type="hidden" name="type" value="issue" />
         <div>
           <label>Background / Description</label><br />
@@ -49,6 +49,22 @@
     </div>
   </script>
   
+  <script id="new-comment-template" type="text/x-mustache">
+    <div>
+      <form>
+        <input type="hidden" name="type" value="comment" />
+        <div>
+          <label>Comment</label><br />
+          <textarea name="content" rows="20" cols="80"></textarea>
+        </div>
+        <div>
+          <input type="submit" />
+        </div>
+      </form>
+    </div>
+  </script>
+  
+  <script src="script/jtemplate.js"></script>
   <script src="script/app.js"></script>
 
 </html>
