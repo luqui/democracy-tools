@@ -23,16 +23,17 @@
 
   <script id="issue-list-template" type="text/x-mustache">
    <table>
-    {{#issues}}
+    {{#items}}
     <tr><td>{{content}}<br/><b>{{summary}}</b></tr>
-    {{/issues}}
+    {{/items}}
    </table>
+   <a href="#" id="add">Add</a>
   </script>
   
   <script id="new-issue-template" type="text/x-mustache">
     <div id="new-issue">
-      <h2>New Issue</h2>
       <form id="new-issue-form">
+        <input type="hidden" name="type" value="issue" />
         <div>
           <label>Background / Description</label><br />
           <textarea name="content" rows="20" cols="80"></textarea>

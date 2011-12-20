@@ -20,51 +20,53 @@ $(function() {
     var path = unescape(document.location.pathname).split('/'),
         design = path[3],
         db = $.couch.db(path[1]);
-    
-    $('#new-issue #new-issue-form').submit(function(e) {
-        var form = this;
-        var doc = $(form).serializeObject();
-        doc.created_on = new Date();
-        doc.type = 'issue';
-        db.saveDoc(doc, {success: function(x){ form.reset(); console.log("Posted ", x) }});
-        return false;
-    });
 
-    var newIssue = function() {
-        var ret = $($.mustache($('#new-issue-template').html(), {}));
-        var form = ret.find('form');
-        form.submit(function(e) {
-            var doc = form.serializeObject();
-            doc.created_on = new Date();
-            doc.type = "issue";
-            db.saveDoc(doc, {
-                success: function() {
-                    ret.remove();
-                },
-                error: function(status) { alert("Error: " + status) }
+    var newItem = function(template) {
+        return function(parent) {
+            var ret = $($.mustache(template, {}));
+            var form = ret.find('form');
+            form.submit(function(e) {
+                var doc = form.serializeObject();
+                doc.created_on = new Date();
+                doc.parent = parent;
+                db.saveDoc(doc, {
+                    success: function() {
+                        ret.remove();
+                    },
+                    error : function(status) { alert("Error: " + status) }
+                });
             });
-        });
-        return ret;
+            return ret;
+        }
     };
 
-    db.view(design + "/root-issues", {
-        descending: "true",
-        success: function(data) {
-            $('#root-issue-list').html(
-                $.mustache($('#issue-list-template').html(), {
-                    issues: data.rows.map(function(r) { return r.value })
-                }));
-            $("#root-issue-list").append(
-                $('<a href="#">Add Issue</a>').click(function() { 
-                    var a = $(this);
-                    a.before(newIssue());
-                    return false;
-                }));
-        },
-        error: function(status) {
-            console.log("Error:", status);
-        }
-    });
+    var itemList = function(view, template, factory) {
+        return function(parent) {
+            var ret = $('<div></div>');
+            db.view(view, {
+                descending: "true",
+                startkey: [parent + '\0'],
+                endkey: [parent],
+                success: function(data) {
+                    var rendered = $.mustache(template, {
+                        items: data.rows.map(function(r) { return r.value })
+                    });
+                    ret.html(rendered);
+                    ret.find('#add').click(function() {
+                        var a = $(this);
+                        a.before(factory(parent));
+                        return false;
+                    });
+                }
+            });
+            return ret;
+        };
+    };
+
+    var newIssue = newItem($('#new-issue-template').html());
+    var issueList = itemList(design + '/issues', $('#issue-list-template').html(), newIssue);
+
+    $('#root-issue-list').append(issueList(null));
 
     /*
     $.couchProfile.templates.profileReady = $("#new-issue").html();
