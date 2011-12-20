@@ -73,15 +73,14 @@ rather than giving the community a chance to resolve the objection. So a winning
 proposal must not only be objection-free, but gain the majority support of the
 participants.
 
-Implementation
-==============
-
-I haven't even started coding and I'm already sick of django. This will be a
-UI-heavy application with a simple data model, I'd like to do as much as I can
-from Javascript.  How?
-
-I suppose I am talking about a layer that abstracts over the server/client
-model. 
+Ok, here's a voting mechanism.  Each person has "consent tokens".  They aren't
+finite in number, but they do have some rules to them.  If you have a consent
+token on a proposal, that means that that proposal is acceptable to you. If you
+have a token on an objection, that means that the objection makes the proposal
+to which it is objecting unacceptable to you.  Thus, you can't have a token on a
+proposal and on one of its objections at the same time.  The number of people
+with tokens on a proposal or objection determines its score, thus its sort
+order.
 
 <!-- vim: tw=80 : 
 -->
