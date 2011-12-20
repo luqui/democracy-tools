@@ -47,7 +47,7 @@ $(function() {
                 var text = buttons[i][0];
                 var action = buttons[i][1];
                 
-                var link = JT.elt('a', { href: '#' }, JT.text(text));
+                var link = JT.elt('a', { href: '#' }, text);
                 link.click(function() {
                     div.before(action());
                     return false;
@@ -79,18 +79,32 @@ $(function() {
         var ret = $('<div></div>');
         var startkey = parent ? [parent] : [];
         var endkey = parent ? [parent + '\377'] : ['\377'];
-        console.log("Viewing ", startkey, "...", endkey);
         db.view(view, {
-            //descending: "true",
             startkey: startkey,
             endkey: endkey,
             success: function(data) {
-                console.log(data);
                 var rendered = template(data.rows.map(function(r) { return r.value }));
                 ret.replaceWith(rendered);
             }
         });
         return ret;
+    };
+
+    var counterLink = function(prefix, view, parent) {
+        var startkey = parent ? [parent] : [];
+        var endkey = parent ? [parent + '\377'] : ['\377'];
+        var node = JT.elt('span', {}, JT.text(prefix));
+        db.view(view, {
+            startkey: startkey,
+            endkey: endkey,
+            reduce: true,
+            success: function(data) {
+                var val = data.rows.length > 0 ? data.rows[0][null] : 0;
+                console.log(data, '(', val, ')');
+                node.text(prefix + ' (' + (data.rows.length > 0 ? data.rows[0].value : 0) + ')');
+            }
+        });
+        return node;
     };
     
     ////////////
@@ -104,7 +118,7 @@ $(function() {
                     JT.elt('br'),
                     JT.elt('b', {}, JT.text(issue.summary)));
             return div.add(addFooter([
-                [ 'Comments', function() { return commentList(issue._id); } ],
+                commentFooterLink(issue._id), 
                 [ 'Proposals', function() { return proposalList(issue._id); } ]
             ]));
         };
@@ -138,6 +152,13 @@ $(function() {
         ]);
         var list = itemList(design + '/comments', parent, showList(showComment, commentsFooter));
         return list;
+    };
+
+    var commentFooterLink = function(parent) {
+        return [
+            counterLink('Comments', design + '/count-comments', parent), 
+            function() { return commentList(parent) }
+        ]
     };
 
     ///////////////
