@@ -1,13 +1,5 @@
 /* add styles here */
 
-body {
-  font:1em Helvetica, sans-serif;
-}
-
-h1 {
-  margin-top:0;
-}
-
 #account {
   float:right;
 }
@@ -23,15 +15,7 @@ h1 {
   border:4px solid #dde;
   background:#eef;
   padding:8px;
-  width:60%;
   float:left;
-}
-
-#sidebar {
-  border:4px solid #dfd;
-  padding:8px;
-  float:right;
-  width:30%;
 }
 
 #items li {
