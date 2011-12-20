@@ -118,15 +118,11 @@ $(function() {
     ////////////
     var issueList = function(parent) {
         var showIssue = function(issue) {
-            var div = 
-                JT.elt('div', {}, 
-                    JT.text(issue.content),
-                    JT.elt('br'),
-                    JT.elt('b', {}, JT.text(issue.summary)));
-            return div.add(addFooter([
+            var div = mustache_template($('#show-issue-template').html())(issue);
+            return div.add(JT.elt('div', {class: 'indent'}, addFooter([
                 commentFooterLink(issue._id), 
                 proposalFooterLink(issue._id)
-            ]));
+            ])));
         };
 
         var issuesFooter = addFooter([
@@ -146,9 +142,7 @@ $(function() {
     //////////////
     var commentList = function(parent) {
         var showComment = function(comment) {
-            var div =
-                JT.elt('div', {},
-                    JT.text(comment.content));
+            var div = mustache_template($('#show-comment-template').html())(comment);
             return div;
         };
 
@@ -169,15 +163,11 @@ $(function() {
     ///////////////
     var proposalList = function(parent) {
         var showProposal = function(proposal) {
-            var div = 
-                JT.elt('div', {},
-                    JT.elt('b', {}, JT.text(proposal.title)),
-                    JT.elt('br'),
-                    JT.text(proposal.content));
-            return div.add(addFooter([
+            var div = mustache_template($('#show-proposal-template').html())(proposal);
+            return div.add(JT.elt('div', {class:'indent'}, addFooter([
                 commentFooterLink(proposal._id),
                 issueFooterLink(proposal._id)
-            ]));
+            ])));
         };
         
         var proposalsFooter = addFooter([

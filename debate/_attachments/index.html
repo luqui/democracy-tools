@@ -21,15 +21,27 @@
   <script src="vendor/couchapp/md5.js"></script>
   <script src="vendor/couchapp/jquery.mustache.js"></script>
 
-  <script id="issue-list-template" type="text/x-mustache">
-   <table>
-    {{#items}}
-    <tr><td>{{content}}<br/><b>{{summary}}</b></tr>
-    {{/items}}
-   </table>
-   <a href="#" id="add">Add</a>
+  <script id="show-issue-template" type="x-mustache">
+    <div class="issue">
+     <b>Issue:</b><br/>
+     {{content}}
+     <b>{{summary}}</b>
+    </div>
   </script>
   
+  <script id="show-proposal-template" type="x-mustache">
+    <div class="proposal">
+     <b>Proposal: {{title}}</b><br/>
+     {{content}}
+    </div>
+  </script>
+
+  <script id="show-comment-template" type="x-mustache">
+    <div class="comment">
+     {{content}}
+    </div>
+  </script>
+
   <script id="new-issue-template" type="text/x-mustache">
     <div>
       <form>
