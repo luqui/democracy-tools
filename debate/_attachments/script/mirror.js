@@ -30,7 +30,6 @@ this.attr = function(attr, mirror) {
         value: mirror.value[attr],
         modify: function(modb) {
             return mirror.modify(function(a) {
-                console.log("Modifying ", attr, " on ", a);
                 var aa = clone(a);
                 aa[attr] = modb(a[attr]);
                 return aa;
@@ -44,11 +43,11 @@ this.append = function(list, def) {
     return {
         value: null,
         modify: function(modb) {
-            return function(a) {
+            return list.modify(function(a) {
                 var aa = clone(a);
                 aa.push(modb(def));
                 return aa;
-            }
+            });
         }
     }
 };

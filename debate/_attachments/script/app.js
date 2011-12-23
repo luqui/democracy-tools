@@ -46,13 +46,24 @@ $(function() {
         design = path[3],
         db = $.couch.db(path[1]);
 
+    var loadDB = function(id) {
+        db.openDoc(id, {
+            success: function(doc) {
+                database = doc;
+                render();
+            },
+            error: function(err) {
+                alert(err);
+            }
+        });
+    };
+
     var saveDB = function(opts) {
-        console.log("saveDB called on", database);
         var modifier = opts.modify;
         var callback = opts.success || function() { };
         
         var newdb = modifier(database);
-        console.log("Saving", newdb);
+        newdb.mtime = new Date();
         db.saveDoc(newdb, {
             success: function(ret) {
                 newdb._rev = ret.rev;
@@ -82,7 +93,11 @@ $(function() {
     };
 
     var newDB = function() {
-        database = { data: issueTemplate };
+        database = { 
+            data: issueTemplate,
+            ctime: new Date(),
+            mtime: new Date()
+        };
         var dbmirror = Mirror.id(database);
         $('#content').empty();
         $('#content').append(newItem(mustache_template($('#new-issue-template').html()), Mirror.attr('data', dbmirror)));
@@ -129,11 +144,11 @@ $(function() {
         return div.add(JT.elt('div', {class: 'indent'}, addFooter([
             [ counter('Comments', issue.value.comments), 
               issue.value.id + '_comments', 
-              showCommentList(issue.id, Mirror.attr('comments', issue))
+              function() { return showCommentList(issue.id, Mirror.attr('comments', issue)) }
             ],
             [ counter('Proposals', issue.value.proposals),
                issue.value.id + '_proposals', 
-               showProposalList(issue.id, Mirror.attr('proposals', issue)) 
+               function() { return showProposalList(issue.id, Mirror.attr('proposals', issue)) }
             ]
         ])));
     };
@@ -161,15 +176,15 @@ $(function() {
 
     var showProposal = function(proposal) {
         var div = mustache_template($('#show-proposal-template').html())(proposal.value);
-        div.prepend(voter(proposal));
+        div.prepend(voter(Mirror.attr('votes', proposal)));
         return div.add(JT.elt('div', {class:'indent'}, addFooter([
             [ counter('Comments', proposal.value.comments),
               proposal.value.id + '_comments', 
-              showCommentList(proposal.id, Mirror.attr('comments', proposal)) 
+              function() { return showCommentList(proposal.id, Mirror.attr('comments', proposal)) }
             ],
             [ counter('Issues', proposal.value.issues),
               proposal.value.id + '_issues',
-              showIssueList(proposal.id, Mirror.attr('issues', proposal)) 
+              function() { return showIssueList(proposal.id, Mirror.attr('issues', proposal)) }
             ]
         ])));
     };
@@ -205,27 +220,38 @@ $(function() {
 
                 var elem = null;
                 var link = JT.elt('a', { href: '#', class: userState[id] }, text);
-                link.click(function() {
-                    if (userState[id] == 'contracted') {
+
+                var update = function() {
+                    if (userState[id] == 'expanded') {
                         if (elem == null) {
                             elem = action();
                             link.after(elem);
                         }
-                        else {  
+                        else {
                             elem.show();
                         }
-                        userState[id] = 'expanded';
                     }
-                    else {
+                    else if (elem != null) {
                         elem.hide();
-                        userState[id] = 'contracted';
                     }
                     link.removeClass('expanded');
                     link.removeClass('contracted');
                     link.addClass(userState[id]);
+                };
+                
+                link.click(function() {
+                    if (userState[id] == 'contracted') {
+                        userState[id] = 'expanded';
+                    }
+                    else {
+                        userState[id] = 'contracted';
+                    }
+                    update();
                     return false;
                 });
+                
                 div.append(link, JT.elt('br'));
+                update();
             })();
         }
         return div;
@@ -270,9 +296,7 @@ $(function() {
     };
 
     var add = function(x, list) {
-        console.log("Adding", x, "to", list);
         var list2 = clone(list);
-        console.log("(list2 is ", list2, ")");
         list2.push(x);
         return list2;
     };
@@ -281,7 +305,6 @@ $(function() {
         var voted = elem(username, votes.value);
         var votedCls = voted ? 'voted' : 'unvoted';
 
-        console.log("votes mirror", votes);
         var box = JT.elt('span', { class: votedCls }, JT.text(votes.value.length));
 
         box.click(function() {
@@ -295,7 +318,6 @@ $(function() {
             else {
                 saveDB({
                     modify: votes.modify(function(votes) {
-                        console.log("votes", votes);
                         return add(username, votes);
                     })
                 });
@@ -309,10 +331,37 @@ $(function() {
     $("#account").couchLogin({
         loggedIn: function(session) { 
             username = session.userCtx.name; 
-            $('#root-issue-list').append(issueList(null));
         },
         loggedOut: function(session) { if (username) document.location.reload(); }
     });
 
-    newDB();
+    (function() {
+        $('#content').empty();
+        $('#content').append(
+            JT.elt('div', {},
+                JT.elt('a', { href: '#' },
+                    JT.text("New Issue")).click(function() {
+                        newDB();
+                        return false;
+                    })));
+        
+        db.view(design + "/recent", {
+            descending: true,
+            success: function(docs) {
+                for (var i = 0; i < docs.rows.length; i++) {
+                    (function() {
+                        var row = docs.rows[i];
+                        $('#content').append(
+                            JT.elt('div', {},
+                                JT.elt('a', { href: '#' }, 
+                                    JT.text(row.value.summary)).click(function() {
+                                        loadDB(row.id);
+                                        return false;
+                                    })));
+                    })();
+                }
+            },
+            error: function(err) { alert(err); }
+        });
+    })();
  });
