@@ -17,6 +17,19 @@ $(function() {
         return o;
     };
 
+    var clone = function(x) {
+        if (x instanceof Array) {
+            var y = [];
+            for (var i = 0; i < x.length; i++) {
+                y[i] = x[i];
+            }
+            return y;
+        }
+        else {
+            return $.extend({}, x);
+        }
+    };
+
     var mustache_template = function(template) {
         return function(opts) { 
             return $($.mustache(template, opts));
@@ -26,15 +39,20 @@ $(function() {
     var JT = new JTemplate($);
     var Mirror = new MirrorModule($);
 
-    var userState;
-    var database;
+    var userState = {};
+    var database = { data: {} };
     
     var path = unescape(document.location.pathname).split('/'),
         design = path[3],
         db = $.couch.db(path[1]);
 
-    var saveDB = function(modifier, callback) {
+    var saveDB = function(opts) {
+        console.log("saveDB called on", database);
+        var modifier = opts.modify;
+        var callback = opts.success || function() { };
+        
         var newdb = modifier(database);
+        console.log("Saving", newdb);
         db.saveDoc(newdb, {
             success: function(ret) {
                 newdb._rev = ret.rev;
@@ -50,30 +68,33 @@ $(function() {
     };
 
     var renderDatabase = function(database) {
-        if (database.data.type == 'issue') {
+        if (database.value.data.type == 'issue') {
             return showIssue(Mirror.attr('data', database));
         }
-        else if (database.data.type == 'proposal') {
+        else if (database.value.data.type == 'proposal') {
             return showProposal(Mirror.attr('data', database));
         }
     };
 
     var render = function() {
         $('#content').empty();
-        $('#content').append(renderDatabase(database));
+        $('#content').append(renderDatabase(Mirror.id(database)));
     };
 
     var newDB = function() {
-        database = { data: {} };
+        database = { data: issueTemplate };
+        var dbmirror = Mirror.id(database);
         $('#content').empty();
-        $('#content').append(newItem(mustache_template($('#new-issue-template').html(), Mirror.attr('data', database))));
+        $('#content').append(newItem(mustache_template($('#new-issue-template').html()), Mirror.attr('data', dbmirror)));
     };
 
-    newDB();
-    
     //////////////
     // Comments //
     //////////////
+
+    var commentTemplate = {
+        type: 'comment'
+    };
 
     var showComment = function(comment) {
         var div = mustache_template($('#show-comment-template').html())(comment);
@@ -83,31 +104,36 @@ $(function() {
     var showCommentList = function(parent, comments) {
         var footer = addFooter([
             [ 'Add Comment', parent + '_comments', function() {
-                    return newItem(mustache_template($('#new-comment-template').html()), Mirror.append(comments));
+                    return newItem(mustache_template($('#new-comment-template').html()), Mirror.append(comments, commentTemplate));
                 }
             ]
         ]);
         return showList(showComment, footer, comments);
     };
-    
-    var commentFooterLink = footerLink('Comments', 'comment', commentList);
 
     
     ////////////
     // Issues //
     ////////////
+    
+    var issueTemplate = {
+        comments: [],
+        proposals: [],
+        votes: [],
+        type: 'issue'
+    };
 
     var showIssue = function(issue) {
         var div = mustache_template($('#show-issue-template').html())(issue);
-        div.prepend(voter(Mirror.attr('votes', issue));
+        div.prepend(voter(Mirror.attr('votes', issue)));
         return div.add(JT.elt('div', {class: 'indent'}, addFooter([
             [ counter('Comments', issue.value.comments), 
               issue.value.id + '_comments', 
-              commentsFooterLink(Mirror.attr('comments', issue)) 
+              showCommentList(issue.id, Mirror.attr('comments', issue))
             ],
             [ counter('Proposals', issue.value.proposals),
                issue.value.id + '_proposals', 
-               proposalsFooterLink(Mirror.attr('proposals', issue)) 
+               showProposalList(issue.id, Mirror.attr('proposals', issue)) 
             ]
         ])));
     };
@@ -115,30 +141,35 @@ $(function() {
     var showIssueList = function(parent, issues) {
         var footer = addFooter([
             [ 'Add Issue', parent + '_add_issue', function() {
-                    return newItem(mustache_template($('#new-issue-template').html()), Mirror.append(issues));
+                    return newItem(mustache_template($('#new-issue-template').html()), Mirror.append(issues, issueTemplate));
                 } 
             ]
         ]);
         return showList(showIssue, footer, issues);
     };
     
-    var issueFooterLink = footerLink('Issues', 'issue', issueList);
-
     ///////////////
     // Proposals //
     ///////////////
     
+    var proposalTemplate = {
+        comments: [],
+        issues: [],
+        votes: [],
+        type: 'proposal'
+    };
+
     var showProposal = function(proposal) {
         var div = mustache_template($('#show-proposal-template').html())(proposal);
         div.prepend(voter(proposal));
         return div.add(JT.elt('div', {class:'indent'}, addFooter([
             [ counter('Comments', proposal.value.comments),
               proposal.value.id + '_comments', 
-              commentsFooterLink(Mirror.attr('comments', proposal)) 
+              showCommentList(proposal.id, Mirror.attr('comments', proposal)) 
             ],
             [ counter('Issues', proposal.value.issues),
-              proposal.value.id + '_issues', 
-              issuesFooterLink(Mirror.attr('issues', proposal)) 
+              proposal.value.id + '_issues',
+              showIssueList(proposal.id, Mirror.attr('issues', proposal)) 
             ]
         ])));
     };
@@ -146,20 +177,18 @@ $(function() {
     var showProposalList = function(parent, proposals) {
         var footer = addFooter([
             [ 'Add Proposal', parent + '_proposals', function() { 
-                    return newItem(mustache_template($('#new-proposal-template').html()), Mirror.append(proposals));
+                    return newItem(mustache_template($('#new-proposal-template').html()), Mirror.append(proposals, proposalTemplate));
                 }
             ]
         ]);
         return showList(showProposal, footer, proposals);
     };
     
-    var proposalFooterLink = footerLink('Proposals', 'proposal', proposalList);
-    
 
     var showList = function(itemRenderer, footer, list) { 
         var t = JT.elt('div');
         for(var i = 0; i < list.value.length; i++) {
-            t.append(JT.elt('div', {}, itemRenderer(Mirror.attr(i, list)));
+            t.append(JT.elt('div', {}, itemRenderer(Mirror.attr(i, list))));
         }
         return t.append(footer);
     };
@@ -202,18 +231,21 @@ $(function() {
         return div;
     };
 
-    var newItem = function(template, item) {
+    var newItem = function(template, mirror) {
         var ret = template({});
         var form = ret.find('form');
         form.submit(function(e) {
+            e.preventDefault();
             var uuid = $.couch.newUUID();
             var doc = form.serializeObject();
             doc.id = $.couch.newUUID();
             saveDB({
-                modify: item.modify(function(_) { 
-                    return doc;
+                modify: mirror.modify(function(def) { 
+                    def = def || {};
+                    return $.extend({}, def, doc);  // XXX I *think* this gives doc precedence
                 })
             });
+            return false;
         });
         return ret;
     };
@@ -238,7 +270,9 @@ $(function() {
     };
 
     var add = function(x, list) {
+        console.log("Adding", x, "to", list);
         var list2 = clone(list);
+        console.log("(list2 is ", list2, ")");
         list2.push(x);
         return list2;
     };
@@ -247,7 +281,8 @@ $(function() {
         var voted = elem(username, votes.value);
         var votedCls = voted ? 'voted' : 'unvoted';
 
-        var box = JT.elt('span', { class: votedCls }, JT.text(votes.length));
+        console.log("votes mirror", votes);
+        var box = JT.elt('span', { class: votedCls }, JT.text(votes.value.length));
 
         box.click(function() {
             if (voted) {
@@ -260,6 +295,7 @@ $(function() {
             else {
                 saveDB({
                     modify: votes.modify(function(votes) {
+                        console.log("votes", votes);
                         return add(username, votes);
                     })
                 });
@@ -277,4 +313,6 @@ $(function() {
         },
         loggedOut: function(session) { if (username) document.location.reload(); }
     });
+
+    newDB();
  });
