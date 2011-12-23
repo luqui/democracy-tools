@@ -1,7 +1,5 @@
 // Apache 2.0 J Chris Anderson 2011
 $(function() {   
-    var JT = new JTemplate($);
-
     // friendly helper http://tinyurl.com/6aow6yn
     $.fn.serializeObject = function() {
         var o = {};
@@ -24,20 +22,146 @@ $(function() {
             return $($.mustache(template, opts));
         };
     };
+    
+    var JT = new JTemplate($);
+    var Mirror = new MirrorModule($);
 
+    var userState;
+    var database;
+    
     var path = unescape(document.location.pathname).split('/'),
         design = path[3],
         db = $.couch.db(path[1]);
 
+    var saveDB = function(modifier, callback) {
+        var newdb = modifier(database);
+        db.saveDoc(newdb, {
+            success: function(ret) {
+                newdb._rev = ret.rev;
+                database = newdb;
+                render();
+            },
+            error: function(err) { alert(err); /* TODO retry */ }
+        });
+    };
 
-    var showList = function(itemRenderer, footer) { 
-        return function(list) {
-            var t = JT.elt('div');
-            for (var i = 0; i < list.length; i++) {
-                t.append(JT.elt('div', {}, itemRenderer(list[i])));
-            }
-            return t.append(footer);
-        };
+    var saveUserState = function(callback) {
+        (callback || function() { })();
+    };
+
+    var renderDatabase = function(database) {
+        if (database.data.type == 'issue') {
+            return showIssue(Mirror.attr('data', database));
+        }
+        else if (database.data.type == 'proposal') {
+            return showProposal(Mirror.attr('data', database));
+        }
+    };
+
+    var render = function() {
+        $('#content').empty();
+        $('#content').append(renderDatabase(database));
+    };
+
+    var newDB = function() {
+        database = { data: {} };
+        $('#content').empty();
+        $('#content').append(newItem(mustache_template($('#new-issue-template').html(), Mirror.attr('data', database))));
+    };
+
+    newDB();
+    
+    //////////////
+    // Comments //
+    //////////////
+
+    var showComment = function(comment) {
+        var div = mustache_template($('#show-comment-template').html())(comment);
+        return div;
+    };
+
+    var showCommentList = function(parent, comments) {
+        var footer = addFooter([
+            [ 'Add Comment', parent + '_comments', function() {
+                    return newItem(mustache_template($('#new-comment-template').html()), Mirror.append(comments));
+                }
+            ]
+        ]);
+        return showList(showComment, footer, comments);
+    };
+    
+    var commentFooterLink = footerLink('Comments', 'comment', commentList);
+
+    
+    ////////////
+    // Issues //
+    ////////////
+
+    var showIssue = function(issue) {
+        var div = mustache_template($('#show-issue-template').html())(issue);
+        div.prepend(voter(Mirror.attr('votes', issue));
+        return div.add(JT.elt('div', {class: 'indent'}, addFooter([
+            [ counter('Comments', issue.value.comments), 
+              issue.value.id + '_comments', 
+              commentsFooterLink(Mirror.attr('comments', issue)) 
+            ],
+            [ counter('Proposals', issue.value.proposals),
+               issue.value.id + '_proposals', 
+               proposalsFooterLink(Mirror.attr('proposals', issue)) 
+            ]
+        ])));
+    };
+
+    var showIssueList = function(parent, issues) {
+        var footer = addFooter([
+            [ 'Add Issue', parent + '_add_issue', function() {
+                    return newItem(mustache_template($('#new-issue-template').html()), Mirror.append(issues));
+                } 
+            ]
+        ]);
+        return showList(showIssue, footer, issues);
+    };
+    
+    var issueFooterLink = footerLink('Issues', 'issue', issueList);
+
+    ///////////////
+    // Proposals //
+    ///////////////
+    
+    var showProposal = function(proposal) {
+        var div = mustache_template($('#show-proposal-template').html())(proposal);
+        div.prepend(voter(proposal));
+        return div.add(JT.elt('div', {class:'indent'}, addFooter([
+            [ counter('Comments', proposal.value.comments),
+              proposal.value.id + '_comments', 
+              commentsFooterLink(Mirror.attr('comments', proposal)) 
+            ],
+            [ counter('Issues', proposal.value.issues),
+              proposal.value.id + '_issues', 
+              issuesFooterLink(Mirror.attr('issues', proposal)) 
+            ]
+        ])));
+    };
+    
+    var showProposalList = function(parent, proposals) {
+        var footer = addFooter([
+            [ 'Add Proposal', parent + '_proposals', function() { 
+                    return newItem(mustache_template($('#new-proposal-template').html()), Mirror.append(proposals));
+                }
+            ]
+        ]);
+        return showList(showProposal, footer, proposals);
+    };
+    
+    var proposalFooterLink = footerLink('Proposals', 'proposal', proposalList);
+    
+
+    var showList = function(itemRenderer, footer, list) { 
+        var t = JT.elt('div');
+        for(var i = 0; i < list.value.length; i++) {
+            t.append(JT.elt('div', {}, itemRenderer(Mirror.attr(i, list)));
+        }
+        return t.append(footer);
     };
 
     var addFooter = function(buttons) {
@@ -45,12 +169,15 @@ $(function() {
         for (var i = 0; i < buttons.length; i++) {
             (function() {
                 var text = buttons[i][0];
-                var action = buttons[i][1];
+                var id = buttons[i][1];
+                var action = buttons[i][2];
+
+                userState[id] = userState[id] || 'contracted';
 
                 var elem = null;
-                var link = JT.elt('a', { href: '#', class: 'contracted' }, text);
+                var link = JT.elt('a', { href: '#', class: userState[id] }, text);
                 link.click(function() {
-                    if (link.hasClass('contracted')) {
+                    if (userState[id] == 'contracted') {
                         if (elem == null) {
                             elem = action();
                             link.after(elem);
@@ -58,14 +185,15 @@ $(function() {
                         else {  
                             elem.show();
                         }
-                        link.removeClass('contracted');
-                        link.addClass('expanded');
+                        userState[id] = 'expanded';
                     }
                     else {
                         elem.hide();
-                        link.removeClass('expanded');
-                        link.addClass('contracted');
+                        userState[id] = 'contracted';
                     }
+                    link.removeClass('expanded');
+                    link.removeClass('contracted');
+                    link.addClass(userState[id]);
                     return false;
                 });
                 div.append(link, JT.elt('br'));
@@ -74,185 +202,72 @@ $(function() {
         return div;
     };
 
-    var newItem = function(template, parent) {
+    var newItem = function(template, item) {
         var ret = template({});
         var form = ret.find('form');
         form.submit(function(e) {
+            var uuid = $.couch.newUUID();
             var doc = form.serializeObject();
-            doc.created_on = new Date();
-            doc.parent = parent;
-            db.saveDoc(doc, {
-                success: function() {
-                    ret.remove();
-                },
-                error : function(status) { alert("Error: " + status) }
+            doc.id = $.couch.newUUID();
+            saveDB({
+                modify: item.modify(function(_) { 
+                    return doc;
+                })
             });
         });
         return ret;
     };
 
-    var itemList = function(view, parent, template) {
-        var ret = $('<div></div>');
-        var startkey = parent ? [parent] : [null];
-        var endkey = parent ? [parent + '\377'] : ['\0'];
-        db.view(view, {
-            startkey: startkey,
-            endkey: endkey,
-            success: function(data) {
-                var rendered = template(data.rows.map(function(r) { return r.value }));
-                ret.append(rendered);
-            }
-        });
+    var counter = function(prefix, list) {
+        return prefix + ' (' + list.length + ')';
+    };
+    
+    var elem = function(x, list) {
+        for (var i = 0; i < list.length; i++) {
+            if (list[i] == x) { return true; }
+        }
+        return false;
+    };
+
+    var remove = function(x, list) {
+        var ret = [];
+        for (var i = 0; i < list.length; i++) {
+            if (list[i] != x) { ret.push(list[i]) }
+        }
         return ret;
     };
 
-    var counterLink = function(prefix, type, parent) {
-        var startkey = parent ? [type, parent] : [type];
-        var endkey = parent ? [type, parent + '\377'] : [type, '\377'];
-        var node = JT.elt('span', {}, JT.text(prefix));
-        db.view(design + '/count', {
-            startkey: startkey,
-            endkey: endkey,
-            reduce: true,
-            success: function(data) {
-                var val = data.rows.length > 0 ? data.rows[0][null] : 0;
-                node.text(prefix + ' (' + (data.rows.length > 0 ? data.rows[0].value : 0) + ')');
-            }
-        });
-        return node;
+    var add = function(x, list) {
+        var list2 = clone(list);
+        list2.push(x);
+        return list2;
     };
-    
-    var footerLink = function(prefix, type, list) {
-        return function(parent) { 
-            return [ counterLink(prefix, type, parent), function() { return list(parent) } ];
-        }
-    }
 
-    var voter = function(docid) {
-        var box = JT.elt('span', { class: 'unvoted' });
-        var votedoc = null;
-        var voteid = 'vote_' + docid + '_' + username;    
+    var voter = function(votes) {
+        var voted = elem(username, votes.value);
+        var votedCls = voted ? 'voted' : 'unvoted';
 
-        var clickHandler = function() {
-            if (box.hasClass('unvoted')) {
-                box.removeClass('unvoted');
-                box.addClass('voted');
-                votedoc = { type: 'vote', parent: docid, user: username, _id: voteid };
-                db.saveDoc(votedoc, {
-                    success: function(obj) {
-                        votedoc._id = obj.id;
-                        votedoc._rev = obj.rev;
-                        box.text(1+1*box.text());
-                    },
-                    error: function(status, msg) { alert(status + ": " + msg) }
+        var box = JT.elt('span', { class: votedCls }, JT.text(votes.length));
+
+        box.click(function() {
+            if (voted) {
+                saveDB({
+                    modify: votes.modify(function(votes) {
+                        return remove(username, votes);
+                    })
                 });
             }
             else {
-                box.removeClass('voted');
-                box.addClass('unvoted');
-                
-                db.removeDoc(votedoc, {
-                    success: function() {
-                        votedoc = null;
-                        box.text(-1+1*box.text());
-                    },
-                    error: function(status, msg) { alert(status + ": " + msg) }
+                saveDB({
+                    modify: votes.modify(function(votes) {
+                        return add(username, votes);
+                    })
                 });
             }
             return false;
-        };    
-    
-        db.view(design + '/votes', {
-            key: docid,
-            success: function(data) {
-                box.text(data.rows.length);
-                for (var i in data.rows) {
-                    console.log(data.rows[i].user, 'vs', username);
-                    if (data.rows[i].value.user == username) {
-                        box.removeClass('unvoted');
-                        box.addClass('voted');
-                        votedoc = data.rows[i].value;
-                    }
-                }
-                console.log("---");
-                box.click(clickHandler);
-            },
-            error: function(status, msg) { alert(status + ": " + msg) }
-        });
+        }); 
         return box;
     };
-
-    
-    ////////////
-    // Issues //
-    ////////////
-    var issueList = function(parent) {
-        var showIssue = function(issue) {
-            var div = mustache_template($('#show-issue-template').html())(issue);
-            div.prepend(voter(issue._id));
-            return div.add(JT.elt('div', {class: 'indent'}, addFooter([
-                commentFooterLink(issue._id), 
-                proposalFooterLink(issue._id)
-            ])));
-        };
-
-        var issuesFooter = addFooter([
-            [ 'Add Issue', function() {
-                    return newItem(mustache_template($('#new-issue-template').html()), parent);
-                } 
-            ]
-        ]);
-        var list = itemList(design + '/issues', parent, showList(showIssue, issuesFooter));
-        return list;
-    };
-
-    var issueFooterLink = footerLink('Issues', 'issue', issueList);
-
-    //////////////
-    // Comments //
-    //////////////
-    var commentList = function(parent) {
-        var showComment = function(comment) {
-            var div = mustache_template($('#show-comment-template').html())(comment);
-            return div;
-        };
-
-        var commentsFooter = addFooter([
-            [ 'Add Comment', function() {
-                    return newItem(mustache_template($('#new-comment-template').html()), parent);
-                }
-            ]
-        ]);
-        var list = itemList(design + '/comments', parent, showList(showComment, commentsFooter));
-        return list;
-    };
-
-    var commentFooterLink = footerLink('Comments', 'comment', commentList);
-
-    ///////////////
-    // Proposals //
-    ///////////////
-    var proposalList = function(parent) {
-        var showProposal = function(proposal) {
-            var div = mustache_template($('#show-proposal-template').html())(proposal);
-            div.prepend(voter(proposal._id));
-            return div.add(JT.elt('div', {class:'indent'}, addFooter([
-                commentFooterLink(proposal._id),
-                issueFooterLink(proposal._id)
-            ])));
-        };
-        
-        var proposalsFooter = addFooter([
-            [ 'Add Proposal', function() { 
-                    return newItem(mustache_template($('#new-proposal-template').html()), parent);
-                }
-            ]
-        ]);
-        var list = itemList(design + '/proposals', parent, showList(showProposal, proposalsFooter));
-        return list;
-    };
-    
-    var proposalFooterLink = footerLink('Proposals', 'proposal', proposalList);
 
     var username = null;
     $("#account").couchLogin({
