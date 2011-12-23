@@ -97,7 +97,7 @@ $(function() {
     };
 
     var showComment = function(comment) {
-        var div = mustache_template($('#show-comment-template').html())(comment);
+        var div = mustache_template($('#show-comment-template').html())(comment.value);
         return div;
     };
 
@@ -124,7 +124,7 @@ $(function() {
     };
 
     var showIssue = function(issue) {
-        var div = mustache_template($('#show-issue-template').html())(issue);
+        var div = mustache_template($('#show-issue-template').html())(issue.value);
         div.prepend(voter(Mirror.attr('votes', issue)));
         return div.add(JT.elt('div', {class: 'indent'}, addFooter([
             [ counter('Comments', issue.value.comments), 
@@ -160,7 +160,7 @@ $(function() {
     };
 
     var showProposal = function(proposal) {
-        var div = mustache_template($('#show-proposal-template').html())(proposal);
+        var div = mustache_template($('#show-proposal-template').html())(proposal.value);
         div.prepend(voter(proposal));
         return div.add(JT.elt('div', {class:'indent'}, addFooter([
             [ counter('Comments', proposal.value.comments),
