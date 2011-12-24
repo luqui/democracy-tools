@@ -118,7 +118,7 @@ $(function() {
 
     var showCommentList = function(parent, comments) {
         var footer = addFooter([
-            [ 'Add Comment', parent + '_comments', function() {
+            [ 'Add Comment', parent + '_add_comment', function() {
                     return newItem(mustache_template($('#new-comment-template').html()), Mirror.append(comments, commentTemplate));
                 }
             ]
@@ -144,11 +144,11 @@ $(function() {
         return div.add(JT.elt('div', {class: 'indent'}, addFooter([
             [ counter('Comments', issue.value.comments), 
               issue.value.id + '_comments', 
-              function() { return showCommentList(issue.id, Mirror.attr('comments', issue)) }
+              function() { return showCommentList(issue.value.id, Mirror.attr('comments', issue)) }
             ],
             [ counter('Proposals', issue.value.proposals),
                issue.value.id + '_proposals', 
-               function() { return showProposalList(issue.id, Mirror.attr('proposals', issue)) }
+               function() { return showProposalList(issue.value.id, Mirror.attr('proposals', issue)) }
             ]
         ])));
     };
@@ -177,21 +177,23 @@ $(function() {
     var showProposal = function(proposal) {
         var div = mustache_template($('#show-proposal-template').html())(proposal.value);
         div.prepend(voter(Mirror.attr('votes', proposal)));
+        console.log("Proposal", proposal);
+        console.log("ID", proposal.value.id);
         return div.add(JT.elt('div', {class:'indent'}, addFooter([
             [ counter('Comments', proposal.value.comments),
               proposal.value.id + '_comments', 
-              function() { return showCommentList(proposal.id, Mirror.attr('comments', proposal)) }
+              function() { return showCommentList(proposal.value.id, Mirror.attr('comments', proposal)) }
             ],
             [ counter('Issues', proposal.value.issues),
               proposal.value.id + '_issues',
-              function() { return showIssueList(proposal.id, Mirror.attr('issues', proposal)) }
+              function() { return showIssueList(proposal.value.id, Mirror.attr('issues', proposal)) }
             ]
         ])));
     };
     
     var showProposalList = function(parent, proposals) {
         var footer = addFooter([
-            [ 'Add Proposal', parent + '_proposals', function() { 
+            [ 'Add Proposal', parent + '_add_proposal', function() { 
                     return newItem(mustache_template($('#new-proposal-template').html()), Mirror.append(proposals, proposalTemplate));
                 }
             ]
@@ -217,6 +219,7 @@ $(function() {
                 var action = buttons[i][2];
 
                 userState[id] = userState[id] || 'contracted';
+                console.log("ID = ", id, " : ", userState);
 
                 var elem = null;
                 var link = JT.elt('a', { href: '#', class: userState[id] }, text);
