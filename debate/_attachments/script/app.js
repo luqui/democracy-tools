@@ -160,7 +160,7 @@ $(function() {
                 } 
             ]
         ]);
-        return showList(showIssue, footer, issues);
+        return showListByVotes(showIssue, footer, issues);
     };
     
     ///////////////
@@ -177,8 +177,6 @@ $(function() {
     var showProposal = function(proposal) {
         var div = mustache_template($('#show-proposal-template').html())(proposal.value);
         div.prepend(voter(Mirror.attr('votes', proposal)));
-        console.log("Proposal", proposal);
-        console.log("ID", proposal.value.id);
         return div.add(JT.elt('div', {class:'indent'}, addFooter([
             [ counter('Comments', proposal.value.comments),
               proposal.value.id + '_comments', 
@@ -198,7 +196,7 @@ $(function() {
                 }
             ]
         ]);
-        return showList(showProposal, footer, proposals);
+        return showListByVotes(showProposal, footer, proposals);
     };
     
 
@@ -210,6 +208,11 @@ $(function() {
         return t.append(footer);
     };
 
+    var showListByVotes = function(itemRenderer, footer, list) {
+        return showList(itemRenderer, footer, 
+                        Mirror.sorted(list, function(x) { return -x.votes.length }));
+    };
+
     var addFooter = function(buttons) {
         var div = JT.elt('div');
         for (var i = 0; i < buttons.length; i++) {
@@ -219,7 +222,6 @@ $(function() {
                 var action = buttons[i][2];
 
                 userState[id] = userState[id] || 'contracted';
-                console.log("ID = ", id, " : ", userState);
 
                 var elem = null;
                 var link = JT.elt('a', { href: '#', class: userState[id] }, text);

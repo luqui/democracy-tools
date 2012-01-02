@@ -38,6 +38,19 @@ this.attr = function(attr, mirror) {
     }
 };
 
+this.sorted = function(mirror, proj) {
+    return {
+        value: mirror.value,
+        modify: function(modb) {
+            return mirror.modify(function(a) {
+                var r = modb(a);
+                r.sort(function(x,y) { return proj(x) - proj(y) });
+                return r;
+            })
+        }
+    }
+};
+
 this.append = function(list, def) {
     def = def || null;
     return {
