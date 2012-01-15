@@ -28,6 +28,9 @@ span.unvoted {
 .support {
     float: right;
     width: 2in;
+    font-style: italic;
+    padding-left: 2em;
+    text-indent: -2em;
 }
 
 .proposal {
