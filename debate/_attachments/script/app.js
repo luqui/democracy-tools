@@ -275,6 +275,7 @@ $(function() {
             var uuid = $.couch.newUUID();
             var doc = form.serializeObject();
             doc.id = $.couch.newUUID();
+            doc.user = username;
             saveDB({
                 modify: mirror.modify(function(def) { 
                     def = def || {};

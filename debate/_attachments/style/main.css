@@ -37,8 +37,9 @@ span.unvoted {
 }
 
 .comment {
-    border: 1px solid #555;
+    border: none;
     border-radius: 10px;
+    margin-top: 2px;
     padding: 3px;
     background: #eee;
     color: #444;
