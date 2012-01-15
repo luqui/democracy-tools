@@ -333,6 +333,11 @@ $(function() {
         var ret = template({});
         var form = ret.find('form');
         form.submit(function(e) {
+            if (username == null) {
+                alert("Log in to add items");
+                return false;
+            }
+            
             e.preventDefault();
             var uuid = $.couch.newUUID();
             var doc = form.serializeObject();
@@ -381,6 +386,7 @@ $(function() {
         var box = JT.elt('span', { class: votedCls }, JT.text(votes.value.length));
 
         box.click(function() {
+            if (username == null) return;
             if (voted) {
                 saveDB({
                     modify: votes.modify(function(votes) {
