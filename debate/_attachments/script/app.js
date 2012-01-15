@@ -46,10 +46,15 @@ $(function() {
         design = path[3],
         db = $.couch.db(path[1]);
 
+    var setDB = function(id, doc) {
+        database = doc;
+        document.location.href = '#' + id;
+    };
+
     var loadDB = function(id) {
         db.openDoc(id, {
             success: function(doc) {
-                database = doc;
+                setDB(id, doc);
                 render();
             },
             error: function(err) {
@@ -340,7 +345,7 @@ $(function() {
         loggedOut: function(session) { if (username) document.location.reload(); }
     });
 
-    (function() {
+    var docIndex = function() {
         $('#content').empty();
         $('#content').append(
             JT.elt('div', {},
@@ -368,5 +373,14 @@ $(function() {
             },
             error: function(err) { alert(err); }
         });
+    };
+
+    (function() {
+        if (document.location.hash[0] == '#') {
+            loadDB(document.location.hash.substr(1));
+        }
+        else {
+            docIndex();
+        }
     })();
  });
