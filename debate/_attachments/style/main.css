@@ -25,6 +25,11 @@ span.unvoted {
     background: #f88;
 }
 
+.support {
+    float: right;
+    width: 2in;
+}
+
 .proposal {
     border: 1px solid black;
     padding: 5px 10px 5px 10px;

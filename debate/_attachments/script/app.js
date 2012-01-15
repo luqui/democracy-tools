@@ -130,6 +130,46 @@ $(function() {
         ]);
         return showList(showComment, footer, comments);
     };
+    
+    var markdown = new Showdown.converter();
+
+    var markdownContent = function(i) {
+        var j = clone(i);
+        j.content = markdown.makeHtml(i.content);
+        return j;
+    };
+
+    var Set = {
+        fromList: function(l) {
+            var r = {};
+            for (var i in l) { r[l[i]] = 1 }
+            return r;
+        },
+        union: function(sets) {
+            var r = {};
+            for (var i in sets) {
+                for (var j in sets[i]) {
+                    r[j] = 1;
+                }
+            }
+            return r;
+        },
+        difference: function(set1, set2) {
+            var r = Set.union([set1]);
+            for (var i in set2) {
+                delete r[i];
+            }
+            return r;
+        },
+        toList: function(set) {
+            var r = [];
+            for (var i in set) {
+                r.push(i);
+            }
+            r.sort();
+            return r;
+        }
+    };
 
     
     ////////////
@@ -143,16 +183,12 @@ $(function() {
         type: 'issue'
     };
 
-    var markdown = new Showdown.converter();
-
-    var markdownContent = function(i) {
-        var j = clone(i);
-        j.content = markdown.makeHtml(i.content);
-        return j;
-    };
-
     var showIssue = function(issue) {
-        var div = mustache_template($('#show-issue-template').html())(markdownContent(issue.value));
+        var div = mustache_template($('#show-issue-template').html())(
+            markdownContent($.extend({}, issue.value, {
+                support: Set.toList(issueSupport(issue.value))
+            }))
+        );
         div.prepend(voter(Mirror.attr('votes', issue)));
         return div.add(JT.elt('div', {class: 'indent'}, addFooter([
             [ counter('Comments', issue.value.comments), 
@@ -175,6 +211,13 @@ $(function() {
         ]);
         return showListByVotes(showIssue, footer, issues);
     };
+
+    // The support of an issue is the set of users who have voted on it
+    // but do not support any of its proposals.
+    var issueSupport = function(issue) {
+        return Set.difference(Set.fromList(issue.votes), 
+                              Set.union(issue.proposals.map(proposalSupport)));
+    };
     
     ///////////////
     // Proposals //
@@ -188,7 +231,11 @@ $(function() {
     };
 
     var showProposal = function(proposal) {
-        var div = mustache_template($('#show-proposal-template').html())(markdownContent(proposal.value));
+        var div = mustache_template($('#show-proposal-template').html())(
+            markdownContent($.extend({}, proposal.value, { 
+                support: Set.toList(proposalSupport(proposal.value))
+            }))
+        );
         div.prepend(voter(Mirror.attr('votes', proposal)));
         return div.add(JT.elt('div', {class:'indent'}, addFooter([
             [ counter('Comments', proposal.value.comments),
@@ -210,6 +257,13 @@ $(function() {
             ]
         ]);
         return showListByVotes(showProposal, footer, proposals);
+    };
+    
+    // The support of a proposal is the set of users who have voted on it
+    // but do not support any of its issues.
+    var proposalSupport = function(proposal) {
+        return Set.difference(Set.fromList(proposal.votes), 
+                              Set.union(proposal.issues.map(issueSupport)));
     };
     
 

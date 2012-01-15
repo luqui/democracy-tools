@@ -23,6 +23,7 @@
 
   <script id="show-issue-template" type="x-mustache">
     <div class="issue">
+     <div class="support"><i>Support</i>: {{#support}}{{.}} {{/support}}</div>
      <b>{{summary}}</b>
      {{{content}}}
     </div>
@@ -30,6 +31,7 @@
   
   <script id="show-proposal-template" type="x-mustache">
     <div class="proposal">
+     <div class="support"><i>Support</i>: {{#support}}{{.}} {{/support}}</div>
      <b>Proposal: {{title}}</b><br/>
      {{{content}}}
     </div>
