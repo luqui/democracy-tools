@@ -40,21 +40,18 @@ $(function() {
     var Mirror = new MirrorModule($);
 
     var userState = {};
-    var database = { data: {} };
+    var database = null;
     
     var path = unescape(document.location.pathname).split('/'),
         design = path[3],
         db = $.couch.db(path[1]);
 
-    var setDB = function(id, doc) {
-        database = doc;
-        document.location.href = '#' + id;
-    };
 
     var loadDB = function(id) {
         db.openDoc(id, {
             success: function(doc) {
-                setDB(id, doc);
+                database = doc;
+                document.location.href = '#' + id;
                 render();
             },
             error: function(err) {
@@ -73,6 +70,7 @@ $(function() {
             success: function(ret) {
                 newdb._rev = ret.rev;
                 database = newdb;
+                document.location = '#' + ret.id;
                 render();
             },
             error: function(err) { alert(err); /* TODO retry */ }
@@ -93,6 +91,9 @@ $(function() {
     };
 
     var render = function() {
+        if (!database) {
+            return;
+        }
         $('#content').empty();
         $('#content').append(renderDatabase(Mirror.id(database)));
     };
@@ -410,8 +411,12 @@ $(function() {
     $("#account").couchLogin({
         loggedIn: function(session) { 
             username = session.userCtx.name; 
+            render();
         },
-        loggedOut: function(session) { if (username) document.location.reload(); }
+        loggedOut: function(session) { 
+            username = null;
+            render(); 
+        }
     });
 
     var docIndex = function() {
@@ -423,7 +428,6 @@ $(function() {
                         newDB();
                         return false;
                     })));
-        
         db.view(design + "/recent", {
             descending: true,
             success: function(docs) {
