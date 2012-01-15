@@ -117,7 +117,7 @@ $(function() {
     };
 
     var showComment = function(comment) {
-        var div = mustache_template($('#show-comment-template').html())(comment.value);
+        var div = mustache_template($('#show-comment-template').html())(markdownContent(comment.value));
         return div;
     };
 
@@ -143,8 +143,16 @@ $(function() {
         type: 'issue'
     };
 
+    var markdown = new Showdown.converter();
+
+    var markdownContent = function(i) {
+        var j = clone(i);
+        j.content = markdown.makeHtml(i.content);
+        return j;
+    };
+
     var showIssue = function(issue) {
-        var div = mustache_template($('#show-issue-template').html())(issue.value);
+        var div = mustache_template($('#show-issue-template').html())(markdownContent(issue.value));
         div.prepend(voter(Mirror.attr('votes', issue)));
         return div.add(JT.elt('div', {class: 'indent'}, addFooter([
             [ counter('Comments', issue.value.comments), 
@@ -180,7 +188,7 @@ $(function() {
     };
 
     var showProposal = function(proposal) {
-        var div = mustache_template($('#show-proposal-template').html())(proposal.value);
+        var div = mustache_template($('#show-proposal-template').html())(markdownContent(proposal.value));
         div.prepend(voter(Mirror.attr('votes', proposal)));
         return div.add(JT.elt('div', {class:'indent'}, addFooter([
             [ counter('Comments', proposal.value.comments),
